@@ -2,13 +2,13 @@ import pygame
 
 #Functions
 def drawRects(rects):
+    #Get rid of old rectangles
+    screen.fill((0, 0, 0)) 
     for rectangle in rects:
                             #(Surface, color [A], rect, width)
         pygame.draw.rect(screen, (255, 255, 255, 1), rectangle, width=0)
-        #update screen
-        pygame.display.update(rectangle)
-        print(f"I have displayed the rectangle")
-        return 1
+    if len(rects) == 0:
+        screen.fill((0, 0, 0))
 
 def removeRect(rects, pos):
     print(f"I am removing rectangle at {pos}")
@@ -17,8 +17,9 @@ def removeRect(rects, pos):
             rects.remove(rectangle)
             print(f"I have removed the rectangle")
             #update screen
-            pygame.display.update(rectangle)
+            drawRects(rects)
             return 1
+        
         return 0
 
 
@@ -36,7 +37,6 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
     
     pygame.display.flip()  # Update the display
     clock.tick(30)  # Maintain 30 FPS
@@ -53,7 +53,7 @@ while running:
         pygame.draw.line(screen, (0, 0, 60), (0, y), (screen.get_width(), y))
     
     #Get mouse input
-    mousePos = (pygame.mouse.get_pos()[0] - 10, pygame.mouse.get_pos()[1] - 10)
+    mousePos = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
     mouseInput = pygame.mouse.get_pressed()
 
     if mouseInput[0]:  # Left mouse button make a white box
@@ -62,9 +62,9 @@ while running:
         if x % 10 == 0 and y % 10 == 0:
             break
         if x % 10 != 0:
-            x += 10 - (x % 10)
+            x -= x % 10
         if y % 10 != 0:
-            y += 10 - (y % 10)
+            y -= y % 10
         #Draw rect at grid location
         newRect = pygame.Rect(x, y, 10, 10)
         if len(rects) == 0:
