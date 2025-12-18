@@ -220,24 +220,22 @@ def game():
                                 neighbors += GRID[ny,nx]
 
                         #Apply rules
-                        #If nlimit neighbors persist
-                        if neighbors == nlimit - 1:
+                        #If nlimit neighbors persist if alive
+                        if neighbors == nlimit - 1 and GRID[y,x]:
                             NEXT[y,x] = True
 
                         #if nlimit neighbors lives if dead (repop)
                         if neighbors == nlimit and not GRID[y,x]:
                             NEXT[y,x] = True
 
-                        # Random play around
-                        #if nlimit neighbors randomly lives or dies if alive
+                        #if nlimit neighbors randomly lives or dies if alive (repop / overpop)
                         if neighbors == nlimit and GRID[y,x]:
-                            rand.seed(rand.random())
-                            rx = rand.randint(-1,1)
-                            ry = rand.randint(-1,1)
-                            NEXT[ry,rx] = rand.randint(0,1)
+                            rx = (x + rand.randint(-1,1)) % GRID_W
+                            ry = (y + rand.randint(-1,1)) % GRID_H
+                            NEXT[ry,rx] = rand.randint(0, 1)
                         
                         #if >nlimit dies (overpop)
-                        if neighbors > 3:
+                        if neighbors > nlimit or neighbors < (nlimit - 1):
                             NEXT[y,x] = False
                             
                 GRID[:] = NEXT
