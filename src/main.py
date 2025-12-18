@@ -2,18 +2,22 @@ import sys
 import pygame
 import pygbag
 import os
-#import pyopengl
 import pygame_menu
 import numpy as np
+import random as rand
 
 SCREEN_X = 1280
 SCREEN_Y = 720
 SCREEN = None
 MENU_X = 1000
 MENU_Y = 700
-RECTS = []
+CELL_SIZE = 10
 RUNNING = True
 SIMULATE = False
+GRID_H = SCREEN_Y // CELL_SIZE
+GRID_W = SCREEN_X // CELL_SIZE
+GRID = np.zeros((GRID_H, GRID_W), dtype=bool)
+
 
 MENU_THEME = pygame_menu.themes.Theme(
     title_background_color=(0,0,0), # Black
@@ -34,6 +38,27 @@ MENU_THEME = pygame_menu.themes.Theme(
 
 #Functions
 
+def updateGame():
+    global GRID
+
+    for x in range(GRID_W):
+        for y in range(GRID_H):
+            color = ()
+            if GRID[y,x] == True:
+                color = (255,255,255)
+            if GRID[y,x] == False:
+                color = (0,0,0)
+            drawRect(x * CELL_SIZE, y * CELL_SIZE, color)
+            
+    drawGrid()
+    pygame.display.flip()
+
+def drawRect(x,y, color):
+    global CELL_SIZE
+    #Draw the rectangle
+    square = pygame.Rect((x,y, CELL_SIZE, CELL_SIZE))
+    pygame.draw.rect(SCREEN, color, square)
+
 def drawGrid():
     # Draw the grid lines only
     global SCREEN
@@ -41,28 +66,6 @@ def drawGrid():
         pygame.draw.line(SCREEN, (0, 0, 60), (x, 0), (x, SCREEN.get_height()))
     for y in range(0, SCREEN.get_height(), 100):
         pygame.draw.line(SCREEN, (0, 0, 60), (0, y), (SCREEN.get_width(), y))
-
-def drawRects():
-    global SCREEN
-    global RECTS
-
-    #Clear old rectangles
-    SCREEN.fill((0,0,0))
-    drawGrid()
-
-    for rectangle in RECTS:
-        # (Surface, color [R,G,B,A], rect, width)
-        pygame.draw.rect(SCREEN, (255, 255, 255), rectangle, width=0)
-    pygame.display.flip()
-
-def removeRect(pos):
-    global SCREEN
-    global RECTS
-
-    for i in range(len(RECTS) - 1, -1, -1):
-        if RECTS[i].collidepoint(pos):
-            RECTS.pop(i)
-            drawRects()
 
 def displayMenu():
     global SCREEN
@@ -110,7 +113,7 @@ def optionsMenu():
 
     SCREEN.fill((0, 0, 0))
     menu = pygame_menu.Menu('Options', MENU_X, MENU_Y, theme=MENU_THEME)
-    menu.add.button('Resume', settingsMenu)
+    menu.add.button('Resume', game)
     menu.add.button('Settings', settingsMenu)
     menu.add.button('Controls', controlsMenu)
     def quit_to_menu():
@@ -142,84 +145,105 @@ def mainMenu():
     return
 
 def game():
-    global RECTS
     global SCREEN
     global RUNNING
     global SIMULATE
+    global CELL_SIZE
+    global GRID
+    white = (255, 255, 255)
+    black = (0, 0, 0)
+    nlimit = 3
 
-    SCREEN.fill((0, 0, 0))
+
+    SCREEN.fill(black)
     #Draw the grid
     drawGrid()
     pygame.display.flip()
     clock = pygame.time.Clock()
     
     RUNNING = True
-    while RUNNING == True:
-        clock.tick(30)
+    while RUNNING:
+        if not SIMULATE:
+            clock.tick(120)
+        if SIMULATE:
+            clock.tick(10)
         
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 RUNNING = False
                 return
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    SIMULATE = not SIMULATE
+                if event.key == pygame.K_c and not SIMULATE:
+                    GRID[:] = False
+                    SCREEN.fill(black)
+                    drawGrid()
+                if event.key == pygame.K_ESCAPE:
+                    SIMULATE = False
+                    optionsMenu()
         
         #Get mouse input
-        mousePos = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
-        mouseInput = pygame.mouse.get_pressed()
-        #Get keyboard input
-        keys = pygame.key.get_pressed()
-        
-        #Parse input
-        if keys[pygame.K_ESCAPE]: # Open the options menu
-            optionsMenu()
-            if not RUNNING:
-                break
-        if keys[pygame.K_RETURN]:
-            #Reverse if the simulation is running
-            #NOTE: Doesn't always work as expected
-            SIMULATE = not SIMULATE
-        if not SIMULATE:
-            if keys[pygame.K_c]:  # Clear screen when 'c' is pressed
-                RECTS = []
-                drawRects()
-        
-            if mouseInput[0]:  # Left mouse button make a white box
-                #Snap position to grid
-                x,y = mousePos
-                
-                if x % 10 != 0:
-                    x -= x % 10
-                if y % 10 != 0:
-                    y -= y % 10
-                #Draw rect at grid location
-                newRect = pygame.Rect(x, y, 10, 10)
+        mx, my = pygame.mouse.get_pos()
+        #Snap to grid
+        gx = mx // CELL_SIZE
+        gy = my // CELL_SIZE
 
-                if not any(rect.colliderect(newRect) for rect in RECTS):
-                    RECTS.append(newRect)
-                    drawRects()
+        if 0 <= gx < GRID_W and 0 <= gy < GRID_H:
 
-            if mouseInput[2]:  # Right mouse button get rid of white box
-                #Snap position to grid
-                x,y = mousePos
-                
-                if x % 10 != 0:
-                    x -= x % 10
-                if y % 10 != 0:
-                    y -= y % 10
-                removeRect((x,y))
+            mouseInput = pygame.mouse.get_pressed()
+            if not SIMULATE:
 
-            prev_mouse = mouseInput
-        if SIMULATE:
-            #Game Simulation logic
-            #Check Rectangles if they have neighbors
-                #Get rectangle
-                    #Get neighbors
-                    #Check count                    
-            #If more than 3 neighbors rectangle "lives"
-            #Else rectangle "dies"
+                if mouseInput[0]:  # Left mouse button make a white box
+                    GRID[gy,gx] = True
+                    drawRect(gx * CELL_SIZE, gy * CELL_SIZE, white)
 
-            pass
-    return
+                if mouseInput[2]:  # Right mouse button get rid of white box
+                    GRID[gy,gx] = False
+                    drawRect(gx * CELL_SIZE, gy * CELL_SIZE, black)
+
+            if SIMULATE:
+                #Game Simulation logic
+
+                #Check neighbors
+                NEXT = GRID.copy()
+                for x in range(GRID_W):
+                    for y in range(GRID_H):
+                        neighbors = 0
+                        for dx in (-1, 0, 1):
+                            for dy in (-1, 0, 1):
+                                if dx == 0 and dy == 0:
+                                    continue
+                                ny = (y + dy) % GRID_H
+                                nx = (x + dx) % GRID_W
+                                neighbors += GRID[ny,nx]
+
+                        #Apply rules
+                        #If nlimit neighbors persist
+                        if neighbors == nlimit - 1:
+                            NEXT[y,x] = True
+
+                        #if nlimit neighbors lives if dead (repop)
+                        if neighbors == nlimit and not GRID[y,x]:
+                            NEXT[y,x] = True
+
+                        # Random play around
+                        #if nlimit neighbors randomly lives or dies if alive
+                        if neighbors == nlimit and GRID[y,x]:
+                            rand.seed(rand.random())
+                            rx = rand.randint(-1,1)
+                            ry = rand.randint(-1,1)
+                            NEXT[ry,rx] = rand.randint(0,1)
+                        
+                        #if >nlimit dies (overpop)
+                        if neighbors > 3:
+                            NEXT[y,x] = False
+                            
+                GRID[:] = NEXT
+        updateGame()
+        if not RUNNING:
+            return
 
 def main():
     global SCREEN
