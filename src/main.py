@@ -1,12 +1,16 @@
+import sys
 import pygame
+import pygbag
+import os
 #import pyopengl
 import pygame_menu
+import numpy as np
 
-SCREEN_X = 1920
-SCREEN_Y = 1080
+SCREEN_X = 1280
+SCREEN_Y = 720
 SCREEN = None
 MENU_X = 1000
-MENU_Y = 800
+MENU_Y = 700
 RECTS = []
 RUNNING = True
 SIMULATE = False
@@ -66,14 +70,21 @@ def displayMenu():
 
     SCREEN.fill((0, 0, 0))
     menu = pygame_menu.Menu('Display', MENU_X, MENU_Y, theme=MENU_THEME)
-    menu.add.button('FPS', mainMenu)
+    menu.add.button('Back', settingsMenu)
 
     menu.mainloop(SCREEN)
     pygame.display.flip()
     return
 
 def controlsMenu():
-    pass
+    SCREEN.fill((0, 0, 0))
+    menu = pygame_menu.Menu('Controls', MENU_X, MENU_Y, theme=MENU_THEME)
+    menu.add.label('Controls coming soon')
+    menu.add.button('Back', settingsMenu)
+
+    menu.mainloop(SCREEN)
+    pygame.display.flip()
+    return
 
 def settingsMenu():
     global SCREEN
@@ -84,8 +95,8 @@ def settingsMenu():
 
     menu.add.button('Display', displayMenu)
     menu.add.range_slider('Sound', default=100, range_values=(0,100), increment=1)
-    menu.add.button('Display', displayMenu)
     menu.add.button('Controls', controlsMenu)
+    menu.add.button('Main Menu', mainMenu)
     menu.add.button('Quit to Desktop', pygame_menu.events.EXIT)
 
     menu.mainloop(SCREEN)
@@ -95,13 +106,18 @@ def settingsMenu():
 def optionsMenu():
     global SCREEN
     global MENU_THEME
+    global RUNNING
 
     SCREEN.fill((0, 0, 0))
     menu = pygame_menu.Menu('Options', MENU_X, MENU_Y, theme=MENU_THEME)
-    menu.add.button('Resume', game)
+    menu.add.button('Resume', settingsMenu)
     menu.add.button('Settings', settingsMenu)
     menu.add.button('Controls', controlsMenu)
-    menu.add.button('Quit to Menu', mainMenu)
+    def quit_to_menu():
+        global RUNNING
+        RUNNING = False
+        menu.disable()
+    menu.add.button('Quit to Menu', quit_to_menu)
     menu.add.button('Quit to Desktop', pygame_menu.events.EXIT)
 
     menu.mainloop(SCREEN)
@@ -134,12 +150,13 @@ def game():
     SCREEN.fill((0, 0, 0))
     #Draw the grid
     drawGrid()
-    
+    pygame.display.flip()
     clock = pygame.time.Clock()
     
     RUNNING = True
     while RUNNING == True:
         clock.tick(30)
+        
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -155,21 +172,16 @@ def game():
         #Parse input
         if keys[pygame.K_ESCAPE]: # Open the options menu
             optionsMenu()
+            if not RUNNING:
+                break
         if keys[pygame.K_RETURN]:
             #Reverse if the simulation is running
+            #NOTE: Doesn't always work as expected
             SIMULATE = not SIMULATE
         if not SIMULATE:
             if keys[pygame.K_c]:  # Clear screen when 'c' is pressed
                 RECTS = []
                 drawRects()
-            if keys[pygame.K_s]: # Move screen down when 's' is pressed
-                SCREEN.scroll(dy=+100)
-            if keys[pygame.K_w]: # Move screen up when 'w' is pressed
-                SCREEN.scroll(dy=-100)
-            if keys[pygame.K_a]: # Move screen left when 'a' is pressed
-                SCREEN.scroll(dx=-100)
-            if keys[pygame.K_d]: # Move screen right when 'd' is pressed
-                SCREEN.scroll(dx=100)
         
             if mouseInput[0]:  # Left mouse button make a white box
                 #Snap position to grid
@@ -207,25 +219,35 @@ def game():
             #Else rectangle "dies"
 
             pass
-
-
-    if RUNNING == False:
-        mainMenu()
+    return
 
 def main():
     global SCREEN
-
+    if sys.platform != "emscripten":
+        import importlib
+        importlib.import_module("pygame_menu")
+        #importlib.import_module("pyopengl")
     #Initialization
     pygame.init()
-    SCREEN = pygame.display.set_mode((SCREEN_X, SCREEN_Y))
+    try:
+        SCREEN = pygame.display.toggle_fullscreen()
+        pygame.RESIZABLE
+        pygame.SCALED
+        
+    except Exception as e:
+        try:
+            SCREEN = pygame.display.set_mode((SCREEN_X, SCREEN_Y))
+        except Exception as e:
+            print(e)
+    finally:
 
-    #Update screen
-    pygame.display.flip()
-    if(RUNNING == True):
-        #Load menu
-        mainMenu()
-    if(RUNNING == False):
-        pygame_menu.events.EXIT
-    
+        #Update screen
+        pygame.display.flip()
+        if(RUNNING == True):
+            #Load menu
+            mainMenu()
+        if(RUNNING == False):
+            pygame_menu.events.EXIT
+
 if __name__=="__main__":
     main()
