@@ -1,14 +1,13 @@
 import sys
 import pygame
-#import pygbag used for serving on a website would need to change the code
 import os
 import pygame_menu
 import numpy as np
 import math
 import random as rand
 
-SCREEN_X = 1280
-SCREEN_Y = 720
+SCREEN_X = 1920
+SCREEN_Y = 1080
 SCREEN = None
 MENU_X = 1
 MENU_Y = 1
@@ -54,16 +53,17 @@ def updateGame():
     pygame.display.flip()
 
 def drawRect(x,y, color):
-    global CELL_SIZE
     #Draw the rectangle
     square = pygame.Rect((x,y, CELL_SIZE, CELL_SIZE))
     pygame.draw.rect(SCREEN, color, square)
 
 def drawGrid():
-    # Draw the grid lines only
-    for x in range(0, SCREEN.get_width(), 100):
+    # Draw the grid lines
+    gridOffset = CELL_SIZE * 10
+    for x in range(0, SCREEN.get_width(), gridOffset):
+                       #(display,color, start, end)
         pygame.draw.line(SCREEN, (0, 0, 60), (x, 0), (x, SCREEN.get_height()))
-    for y in range(0, SCREEN.get_height(), 100):
+    for y in range(0, SCREEN.get_height(), gridOffset):
         pygame.draw.line(SCREEN, (0, 0, 60), (0, y), (SCREEN.get_width(), y))
 
 def displayMenu():
@@ -79,7 +79,10 @@ def displayMenu():
 def controlsMenu():
     SCREEN.fill((0, 0, 0))
     menu = pygame_menu.Menu('Controls', MENU_X, MENU_Y, theme=MENU_THEME)
-    menu.add.label('Controls coming soon')
+    menu.add.label('Esc - Goes to the settings / options menu')
+    menu.add.label('C - Clears the screen while in the game')
+    menu.add.label('Left mouse - Adds a cell to the screen while in the game')
+    menu.add.label('Right mouse - Removes a cell from the screen while in the game')
     menu.add.button('Back', settingsMenu)
 
     menu.mainloop(SCREEN)
@@ -248,7 +251,7 @@ def main():
     pygame.init()
     try:
         #initialize the screen and set the height and widths
-        SCREEN = pygame.display.set_mode((1920,1080), pygame.RESIZABLE | pygame.SCALED)
+        SCREEN = pygame.display.set_mode((SCREEN_X,SCREEN_Y), pygame.RESIZABLE | pygame.SCALED)
         SCREEN_X, SCREEN_Y = SCREEN.get_size()
 
         MENU_Y = .9 * SCREEN_Y
