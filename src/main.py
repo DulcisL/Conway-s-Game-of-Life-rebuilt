@@ -1,16 +1,17 @@
 import sys
 import pygame
-import pygbag
+#import pygbag used for serving on a website would need to change the code
 import os
 import pygame_menu
 import numpy as np
+import math
 import random as rand
 
 SCREEN_X = 1280
 SCREEN_Y = 720
 SCREEN = None
-MENU_X = 1000
-MENU_Y = 700
+MENU_X = 1
+MENU_Y = 1
 CELL_SIZE = 10
 RUNNING = True
 SIMULATE = False
@@ -28,7 +29,8 @@ MENU_THEME = pygame_menu.themes.Theme(
     title_close_button_background_color= (255,0,0), # Red
     title_font=pygame_menu.font.FONT_MUNRO,
     title_font_color= (255,255,255),
-    title_font_size=40,
+    title_font_size= 40,
+
 
     widget_box_background_color = (128,128,128), # Grey
     widget_box_border_color=(30,0,0), # Light Red
@@ -39,8 +41,6 @@ MENU_THEME = pygame_menu.themes.Theme(
 #Functions
 
 def updateGame():
-    global GRID
-
     for x in range(GRID_W):
         for y in range(GRID_H):
             color = ()
@@ -61,15 +61,12 @@ def drawRect(x,y, color):
 
 def drawGrid():
     # Draw the grid lines only
-    global SCREEN
     for x in range(0, SCREEN.get_width(), 100):
         pygame.draw.line(SCREEN, (0, 0, 60), (x, 0), (x, SCREEN.get_height()))
     for y in range(0, SCREEN.get_height(), 100):
         pygame.draw.line(SCREEN, (0, 0, 60), (0, y), (SCREEN.get_width(), y))
 
 def displayMenu():
-    global SCREEN
-    global MENU_THEME
 
     SCREEN.fill((0, 0, 0))
     menu = pygame_menu.Menu('Display', MENU_X, MENU_Y, theme=MENU_THEME)
@@ -90,8 +87,6 @@ def controlsMenu():
     return
 
 def settingsMenu():
-    global SCREEN
-    global MENU_THEME
 
     SCREEN.fill((0, 0, 0))
     menu = pygame_menu.Menu('Display', MENU_X, MENU_Y, theme=MENU_THEME)
@@ -107,8 +102,6 @@ def settingsMenu():
     return
 
 def optionsMenu():
-    global SCREEN
-    global MENU_THEME
     global RUNNING
 
     SCREEN.fill((0, 0, 0))
@@ -129,8 +122,6 @@ def optionsMenu():
 
 def mainMenu():
     # NOTE: For some reason mouse must click on item 2x on program start
-    global SCREEN
-    global MENU_THEME
 
     SCREEN.fill((0, 0, 0))
     mainTheme = MENU_THEME.copy()
@@ -245,22 +236,32 @@ def game():
 
 def main():
     global SCREEN
+    global SCREEN_X
+    global SCREEN_Y
+    global MENU_X
+    global MENU_Y
+
     if sys.platform != "emscripten":
         import importlib
         importlib.import_module("pygame_menu")
-        #importlib.import_module("pyopengl")
     #Initialization
     pygame.init()
     try:
-        SCREEN = pygame.display.toggle_fullscreen()
-        pygame.RESIZABLE
-        pygame.SCALED
+        #initialize the screen and set the height and widths
+        SCREEN = pygame.display.set_mode((1920,1080), pygame.RESIZABLE | pygame.SCALED)
+        SCREEN_X, SCREEN_Y = SCREEN.get_size()
+
+        MENU_Y = .9 * SCREEN_Y
+        MENU_X = .8 * SCREEN_X
+
+        ratio = (MENU_Y / MENU_X)
+
+        #Set the correct Scale for menus
+        MENU_THEME.title_font_size= min(50, math.floor(100 * ratio)) | max(50, math.floor(100 * ratio))
+        MENU_THEME.widget_font_size= min(25, math.floor(50 * ratio)) | max(25, math.floor(100 * ratio))
         
     except Exception as e:
-        try:
-            SCREEN = pygame.display.set_mode((SCREEN_X, SCREEN_Y))
-        except Exception as e:
-            print(e)
+        print(e)
     finally:
 
         #Update screen
