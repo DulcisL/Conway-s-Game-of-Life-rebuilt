@@ -1,6 +1,5 @@
 import sys
 import pygame
-import os
 import pygame_menu
 import numpy as np
 import math
@@ -44,9 +43,9 @@ def updateGame():
     for x in range(GRID_W):
         for y in range(GRID_H):
             color = ()
-            if GRID[y, x] == True:
+            if GRID[y, x]:
                 color = (255, 255, 255)
-            if GRID[y, x] == False:
+            if not GRID[y, x]:
                 color = (0, 0, 0)
             drawRect(x * CELL_SIZE, y * CELL_SIZE, color)
 
@@ -259,10 +258,11 @@ def main():
         import importlib
 
         importlib.import_module("pygame_menu")
+
     # Initialization
     pygame.init()
     try:
-        # initialize the screen and set the height and widths
+        # Initialize the screen and set the height and widths
         SCREEN = pygame.display.set_mode(
             (SCREEN_X, SCREEN_Y), pygame.RESIZABLE | pygame.SCALED
         )
@@ -271,8 +271,13 @@ def main():
         window_w, window_h = pygame.display.get_window_size()
 
         if SCREEN:
-            SCALE_X = window_w / SCREEN_X | 1
-            SCALE_Y = window_h / SCREEN_Y | 1
+            SCALE_X = window_w / SCREEN_X
+            SCALE_Y = window_h / SCREEN_Y
+            # Normalize the scale
+            if SCALE_X > 1:
+                SCALE_X = 1
+            if SCALE_Y > 1:
+                SCALE_Y = 1
 
         MENU_Y = 0.9 * SCREEN_Y * SCALE_Y
         MENU_X = 0.8 * SCREEN_X * SCALE_X
@@ -287,6 +292,7 @@ def main():
 
     except Exception as e:
         print(e)
+
     finally:
         # Update screen
         pygame.display.flip()
