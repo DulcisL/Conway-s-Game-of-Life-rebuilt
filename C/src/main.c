@@ -1,3 +1,4 @@
+#define SDL_MAIN_USE_CALLBACKS 1
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
