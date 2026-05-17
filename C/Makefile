@@ -1,6 +1,6 @@
 CC      = gcc
-CFLAGS  = -O3 -Wall -Wextra -std=c11 -pthread
-LDFLAGS = -lm
+CFLAGS  = -O3 -Wall -Wextra $(shell sdl2-config --cflags)
+LDFLAGS = $(shell sdl2-config --libs)
 TARGET = src/main
 SOURCES = src/main.c
 
